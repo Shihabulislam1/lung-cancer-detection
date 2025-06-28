@@ -44,6 +44,6 @@ spec:
       volumes:
       - name: nfs-volume-basys
         nfs:
-          path: /var/k8s-nfs/ba-sys
+          path: /mnt/k8s_nfs/test-2
           server: 192.168.60.15      
       restartPolicy: Always
