@@ -40,10 +40,10 @@ spec:
         #     cpu: 500m
         #     memory: 500Mi
       imagePullSecrets:
-      - name: docker-reg.oss.net.bd
+      - name: registry-hacathon.oss.net.bd
       volumes:
       - name: nfs-volume-basys
         nfs:
           path: /var/k8s-nfs/ba-sys
-          server: 10.10.100.121      
+          server: 192.168.60.15      
       restartPolicy: Always

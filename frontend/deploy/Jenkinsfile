@@ -1,17 +1,17 @@
 pipeline {
     agent any
     environment {
-        REGISTRY="docker-reg.oss.net.bd"
-        dockerRegistryCredential='docker-reg.oss.net.bd'
+        REGISTRY="registry-hacathon.oss.net.bd"
+        dockerRegistryCredential='registry-hacathon.oss.net.bd'
         dockerImage = ''
         DOCKER_REGISTRY_URL="https://$REGISTRY"
-        DEPLOYMENT_ENV="prod"
+        DEPLOYMENT_ENV="dev"
         IMAGE_CREATED_BY="jenkins"
         CONFIG_MAP="ba-systems-configmap"
 	    SECRET_REF="ba-systems-secret"
-        PROJECT_NAME="ba-systems"
+        PROJECT_NAME="lung-cancer"
         SERVICE_NAME="ba-systems-portal"
-        NAMESPACE="ba-systems"
+        NAMESPACE="test-2"
         DEPLOYMENT_ENV_VERSION="$NAMESPACE"
 
         PROJECT_LOCATION="$JENKINS_DATA_LOCATION/workspace/$JOB_NAME"
