@@ -1,16 +1,22 @@
-FROM docker-reg.oss.net.bd/land_php73:v1
-#apm
-RUN apt update && apt install -y wget curl && rm -rf /var/lib/apt/lists/*
-RUN wget https://github.com/elastic/apm-agent-php/releases/download/v1.15.0/apm-agent-php_1.15.0_amd64.deb && \
-    dpkg -i apm-agent-php_1.15.0_amd64.deb
+# 
 
-WORKDIR /var/www/html/
-#RUN rm -rf ./*
-COPY . .
+version: '3.8'
 
-RUN chown -R www-data:www-data /var/www/html
-#RUN php -r "readfile('http://getcomposer.org/installer');" | php -- --install-dir=/usr/bin/ --filename=composer
-COPY default.conf /etc/apache2/sites-enabled/000-default.conf
+services:
+  postgres:
+    container_name: cancer-database
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: cancer-database
+      POSTGRES_INITDB_ARGS: "--locale=en_US.UTF-8 --encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    command: postgres -c 'cluster_name=cancer-database'
 
-CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
-EXPOSE 80 443
+volumes:
+  postgres_data:

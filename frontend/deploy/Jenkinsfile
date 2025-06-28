@@ -7,10 +7,10 @@ pipeline {
         DOCKER_REGISTRY_URL="https://$REGISTRY"
         DEPLOYMENT_ENV="dev"
         IMAGE_CREATED_BY="jenkins"
-        CONFIG_MAP="ba-systems-configmap"
-	    SECRET_REF="ba-systems-secret"
+        CONFIG_MAP="lung-cancer-configmap"
+	    SECRET_REF="lung-cancer-secret"
         PROJECT_NAME="lung-cancer"
-        SERVICE_NAME="ba-systems-portal"
+        SERVICE_NAME="lung-cancer-portal"
         NAMESPACE="test-2"
         DEPLOYMENT_ENV_VERSION="$NAMESPACE"
 
