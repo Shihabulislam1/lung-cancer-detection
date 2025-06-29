@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+
+    environment {
+        //JENKINS_DATA_LOCATION value comming from the jenkins container's environment value which is the value
+        //of host pc/vm where jenkins continer is mounded and retain jenkins all data
+        PROJECT_LOCATION="$JENKINS_DATA_LOCATION/workspace/$JOB_NAME"
+        
+        NAMESPACE=" test-2"
+        CONFIGMAP_NAME="lung-cancer-configmap"
+        SECRET_NAME="lung-cancer-secret"
+        DEPLOYMENT_DIRECTORY="./lung-cancer-detection/dev"
+    }
+
+    stages {
+        stage('Deploy Global Confgmap') {
+            steps {
+                sh '''
+                envsubst < $DEPLOYMENT_DIRECTORY/configmap.yaml | xargs -I{} echo {}
+                envsubst < $DEPLOYMENT_DIRECTORY/configmap.yaml | kubectl apply -f -
+                '''
+            }
+        }
+        stage('Deploy Secrets') {
+            steps {
+                sh '''
+                envsubst < $DEPLOYMENT_DIRECTORY/secret.yaml | xargs -I{} echo {}
+                envsubst < $DEPLOYMENT_DIRECTORY/secret.yaml | kubectl apply -f -
+                '''
+            }
+        }        
+    }
+}
