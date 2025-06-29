@@ -7,8 +7,8 @@ pipeline {
         PROJECT_LOCATION="$JENKINS_DATA_LOCATION/workspace/$JOB_NAME"
         
         NAMESPACE=" test-2"
-        CONFIGMAP_NAME="lung-cancer-configmap"
-        SECRET_NAME="lung-cancer-secret"
+        CONFIGMAP_NAME="configmap"
+        SECRET_NAME="secret"
         DEPLOYMENT_DIRECTORY="./lung-cancer-detection/dev"
     }
 
