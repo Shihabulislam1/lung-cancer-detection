@@ -1,5 +1,4 @@
 import { HomePageConfig } from "./types";
-import { ReactNode } from "react";
 
 // We'll use icon name strings instead of direct JSX elements
 // These will be converted to React components in the Home component

@@ -10,7 +10,12 @@ type DynamicIconProps = {
 
 const DynamicIcon: React.FC<DynamicIconProps> = ({ config }) => {
   const { name, props } = config;
-  const Icon = (LucideIcons as any)[name];
+  const Icon = (
+    LucideIcons as unknown as Record<
+      string,
+      React.ComponentType<React.SVGProps<SVGSVGElement>>
+    >
+  )[name];
 
   if (!Icon) {
     console.warn(`Icon "${name}" not found in Lucide icons`);

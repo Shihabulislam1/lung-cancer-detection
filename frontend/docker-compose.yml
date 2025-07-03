@@ -1,20 +1,29 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  postgres:
-    container_name: cancer-database
-    image: postgres:15
-    restart: always
-    environment:
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: cancer-database
-      POSTGRES_INITDB_ARGS: "--locale=en_US.UTF-8 --encoding=UTF8"
+  # Next.js Frontend Application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cancer-app-frontend
+    restart: unless-stopped
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    command: postgres -c 'cluster_name=cancer-database'
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://myuser:mypassword@host.docker.internal:5432/cancer-database
+      - NEXTAUTH_SECRET=your-secret-key-here
+      - NEXTAUTH_URL=http://localhost:3000
+      - CLOUDINARY_CLOUD_NAME=dwtmwnrtf
+      - CLOUDINARY_API_KEY=659136859291728
+      - CLOUDINARY_API_SECRET=_N54VyrkVabbHhFBBhZjScWW2wk
+      - ML_API_URL=https://your-flask-api.com/predict
+    networks:
+      - cancer-app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
-volumes:
-  postgres_data:
+networks:
+  cancer-app-network:
+    driver: bridge

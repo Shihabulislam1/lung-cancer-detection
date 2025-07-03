@@ -1,17 +1,22 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { useSession, signOut } from "next-auth/react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { User, Activity } from "lucide-react"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { useSession, signOut } from "next-auth/react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { User } from "lucide-react";
 
 export default function Header() {
-  const pathname = usePathname()
-  const { data: session, status } = useSession()
-  const isLoading = status === "loading"
-  const isAuthenticated = status === "authenticated"
+  const pathname = usePathname();
+  const { status } = useSession();
+  const isLoading = status === "loading";
+  const isAuthenticated = status === "authenticated";
 
   return (
     <header className="border-b">
@@ -34,7 +39,9 @@ export default function Header() {
                 <Link
                   href="/dashboard"
                   className={`text-sm font-medium transition-colors hover:text-primary ${
-                    pathname === "/dashboard" ? "text-foreground" : "text-foreground/60"
+                    pathname === "/dashboard"
+                      ? "text-foreground"
+                      : "text-foreground/60"
                   }`}
                 >
                   Dashboard
@@ -42,7 +49,9 @@ export default function Header() {
                 <Link
                   href="/cancer-detector"
                   className={`text-sm font-medium transition-colors hover:text-primary ${
-                    pathname === "/cancer-detector" ? "text-foreground" : "text-foreground/60"
+                    pathname === "/cancer-detector"
+                      ? "text-foreground"
+                      : "text-foreground/60"
                   }`}
                 >
                   Cancer Detector
@@ -78,7 +87,9 @@ export default function Header() {
                     Cancer Detector
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => signOut()}>Sign out</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => signOut()}>
+                  Sign out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
@@ -94,5 +105,5 @@ export default function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }

@@ -1,7 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { ReportCard, ReportSummary } from "@/components/Dashboard/components/ReportCard";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  ReportCard,
+  ReportSummary,
+} from "@/components/Dashboard/components/ReportCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,21 +17,15 @@ export const ReportsGrid: React.FC<ReportsGridProps> = ({ initialReports }) => {
   const [isLoading, setIsLoading] = useState<boolean>(!initialReports);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (!initialReports) {
-      fetchReports();
-    }
-  }, [initialReports]);
-
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch("/api/cancer-detection/reports");
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch reports");
       }
-      
+
       const data = await response.json();
       setReports(data);
     } catch (error) {
@@ -41,7 +38,13 @@ export const ReportsGrid: React.FC<ReportsGridProps> = ({ initialReports }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (!initialReports) {
+      fetchReports();
+    }
+  }, [initialReports, fetchReports]);
 
   if (isLoading) {
     return (

@@ -1,13 +1,8 @@
-import { ReactNode } from "react";
-
 // Define an IconConfig type to replace direct ReactNode JSX elements
 export type IconConfig = {
   type: "icon";
   name: string;
-  props?: {
-    className?: string;
-    [key: string]: any;
-  };
+  props?: Record<string, unknown>;
 };
 
 export type Section = {

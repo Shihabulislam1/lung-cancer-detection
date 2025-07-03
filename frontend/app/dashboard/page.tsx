@@ -4,7 +4,15 @@ import { headers } from "next/headers";
 import type { Session } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import AllReports from "@/components/Dashboard/containers/AllReports/AllReports";
-import { ReportSummary } from "@/components/Dashboard/components/ReportCard";
+
+// Type for the database report structure
+type DbReport = {
+  id: number;
+  imageUrl: string;
+  status: "pending" | "completed" | "failed";
+  predictedClassIndex?: number;
+  createdAt: string;
+};
 
 export default async function DashboardPage() {
   const session = (await getServerSession(authOptions)) as Session | null;
@@ -43,10 +51,10 @@ export default async function DashboardPage() {
   }
 
   // Get the reports from the API response
-  const dbReports = await response.json();
+  const dbReports: DbReport[] = await response.json();
 
   // Transform database reports to match ReportSummary type
-  const reports = dbReports.map((report: any) => ({
+  const reports = dbReports.map((report: DbReport) => ({
     id: report.id,
     imageUrl: report.imageUrl,
     status: report.status,

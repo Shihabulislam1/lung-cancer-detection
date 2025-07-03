@@ -8,8 +8,8 @@ export default function NotFound() {
       <FileX className="h-16 w-16 text-muted-foreground mb-4" />
       <h2 className="text-2xl font-bold">Report Not Found</h2>
       <p className="text-muted-foreground mt-2 mb-6">
-        The report you're looking for doesn't exist or you don't have permission
-        to view it.
+        The report you&apos;re looking for doesn&apos;t exist or you don&apos;t
+        have permission to view it.
       </p>
       <Link href="/dashboard">
         <Button>Return to Dashboard</Button>

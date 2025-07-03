@@ -74,8 +74,6 @@ export async function POST(request: NextRequest) {
       console.log("Using mock data for cancer detection.");
 
       // Simplified mock data - using only 3 classes (cancer, no cancer, inconclusive)
-      const randomClasses = 3; // Only using 3 classes for frontend display
-
       // Create mock raw output data
       const rawOutput = [[Math.random(), Math.random(), Math.random()]];
 
