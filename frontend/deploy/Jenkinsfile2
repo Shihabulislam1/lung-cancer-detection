@@ -5,7 +5,7 @@ pipeline {
         DEPLOYMENT_ENV="dev"
         IMAGE_CREATED_BY="jenkins"
         PROJECT_NAME="lung-cancer"
-        REPOSITORY_NAME="ung-cancer-detection"
+        REPOSITORY_NAME="lung-cancer-detection"
  
 		
         GIT_TAG=sh(returnStdout: true, script: '''        
@@ -29,7 +29,7 @@ pipeline {
         IMAGE_VERSION="$BUILD_NUMBER-$IMAGE_CREATED_BY-$GIT_TAG-$DEPLOYMENT_ENV"
         IMAGE_REPOSITORY_NAME="$REGISTRY/${HARBOR_PROJECT_NAME}/$PROJECT_NAME"
         DOCKER_TAG="$REGISTRY/$HARBOR_PROJECT_NAME/$PROJECT_NAME:$IMAGE_VERSION"
-        DEPLOYMENT_DIRECTORY="./frontend-react"
+        DEPLOYMENT_DIRECTORY="./frontend"
 
       
 
