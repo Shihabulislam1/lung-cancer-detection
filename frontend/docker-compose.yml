@@ -9,7 +9,7 @@ services:
     container_name: cancer-app-frontend
     restart: unless-stopped
     ports:
-      - "3003:3003"
+      - "3000:3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://myuser:mypassword@host.docker.internal:5432/cancer-database
