@@ -2,119 +2,90 @@ pipeline {
     agent any
 
     environment {
-        REGISTRY = "docker-reg.oss.net.bd"
-        dockerRegistryCredential = 'docker-reg.oss.net.bd'
-        dockerImage = ''
-        DOCKER_REGISTRY_URL = "https://$REGISTRY"
-        CONFIG_MAP = "dev-ba-systems-frontend-cmp"
-        SECRET_REF = "dev-ba-systems-frontend-sec"
-        DEPLOYMENT_ENV = "dev"
-        NAMESPACE = "dev-ba-systems"
-        IMAGE_CREATED_BY = "jenkins"
-        PROJECT_NAME = "dev-ba-systems-frontend"
-        GIT_TAG = sh(returnStdout: true, script: '''        
+        DEPLOYMENT_ENV="dev"
+        IMAGE_CREATED_BY="jenkins"
+        PROJECT_NAME="lung-cancer"
+        REPOSITORY_NAME="ung-cancer-detection"
+ 
+		
+        GIT_TAG=sh(returnStdout: true, script: '''        
             echo $(git describe --tags)
-        ''').trim()
-        DEPLOYMENT_ENV_VERSION = "$NAMESPACE"
-        PROJECT_LOCATION = "$JENKINS_DATA_LOCATION/workspace/$JOB_NAME"
-        IMAGE_VERSION = "$BUILD_NUMBER-$IMAGE_CREATED_BY-$DEPLOYMENT_ENV_VERSION"
-        DOCKER_TAG = "$REGISTRY/$PROJECT_NAME:$IMAGE_VERSION"
-        DEPLOYMENT_DIRECTORY = "./deploy/dev"
+        ''').trim()		
+ 
+         //Host specific configuration
+        HOST_VOLUME_LOCATION="$JENKINS_DATA_LOCATION"
+        M2_REPO="$JENKINS_DATA_LOCATION/.m2"
+ 
+        HARBOR_PROJECT_NAME="lung-cancer"   
+        REGISTRY="registry-hacathon.oss.net.bd"
+        
+        dockerImage = ''
+        dockerRegistryCredential='registry-hacathon.oss.net.bd'
+        DOCKER_REGISTRY_URL="https://$REGISTRY"
+        DEPLOYMENT_TIMEOUT="180s"
+ 
 
-        // Kubernetes cluster specific configuration
-        K8S_SERVICE_NAME = "dev-ba-systems-frontend-svc"
-        K8S_CHANGE_CAUSE = "$IMAGE_VERSION"
-        K8S_NODE_PORT = 30225
-    }
+        PROJECT_LOCATION="$HOST_VOLUME_LOCATION/workspace/$JOB_NAME"
+        IMAGE_VERSION="$BUILD_NUMBER-$IMAGE_CREATED_BY-$GIT_TAG-$DEPLOYMENT_ENV"
+        IMAGE_REPOSITORY_NAME="$REGISTRY/${HARBOR_PROJECT_NAME}/$PROJECT_NAME"
+        DOCKER_TAG="$REGISTRY/$HARBOR_PROJECT_NAME/$PROJECT_NAME:$IMAGE_VERSION"
+        DEPLOYMENT_DIRECTORY="./frontend-react"
 
-    post {
-        always {
-            echo 'Discord Notification.'
-            discordSend description: "$PROJECT_NAME-$DEPLOYMENT_ENV", scmWebUrl: 'https://codelab.ba-systems.com/Inhouse/ba-systems-frontend.git', showChangeset: true, 
-                footer: "message: ${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}", 
-                webhookURL: 'https://discord.com/api/webhooks/1396031028371525632/5yOXc_364E4-JJoB3I8ZiLfwkWzZJ2Ff9zGY4h4L9wChabGJYNaydBWSF_0GTedGVzuI'
-        }
+      
+
     }
 
     stages {
-        stage('Init') {
+    
+     stage('Init') {
             steps {
-                script {
-                    COMMIT_ID = sh(
-                        script: "git log -1 --pretty=format:'%H'",
-                        returnStdout: true
-                    ).trim()
-                    echo "Commit ID: $COMMIT_ID"
-                }
+                sh '''
+                COMMIT_ID=$(git log -1|head -1|awk -F ' ' ' {print $NF}')
+                echo "........result of commit .... $COMMIT_ID"
+                '''
             }
         }
 
-        // stage('Checkout Code') {
-        //     steps {
-        //         git 'https://github.com/expressjs/express.git'
-        //     }
-        // }
 
-        // stage('Generate SBOM') {
-        //     steps {
-        //         script {
-        //             // Generate the SBOM using Syft and save it to sbom.json
-        //             sh 'syft . -o cyclonedx-json > /home/syft/sbom.json'
-        //         }
-        //     }
-        // }
-
-        // stage('Dependency Track Publisher') {
-        //     steps {
-        //         withCredentials([string(credentialsId: 'ba-systems-vulnerable-tracker', variable: 'API_KEY')]) {
-        //             dependencyTrackPublisher artifact: '/home/syft/sbom.json', 
-        //                 autoCreateProjects: true, 
-        //                 projectName: 'ba-systems-frontend', 
-        //                 projectVersion: '1.0', 
-        //                 dependencyTrackApiKey: API_KEY, 
-        //                 projectId: '8439c3e2-c7bc-47a7-846b-acdcedd28ffa', 
-        //                 synchronous: false
-        //                 // timeout: 1800 // Set the timeout to 30 minutes (in seconds)
-        //         }
-        //     }
-        // }
-
-        stage('Building Docker image') { 
+      
+     stage('Building Docker image') { 
             steps { 
                 script { 
-                    dockerImage = docker.build(DOCKER_TAG, '-f frontend/Dockerfile .')
+                    dockerImage = docker.build("$DOCKER_TAG", "-f ./frontend/Dockerfile .")
                 }
                 sh '''
-                docker images | grep ${PROJECT_NAME}
+                docker images|grep $PROJECT_NAME
                 '''
             } 
         }
 
-        stage('Push Docker image') {
-            steps {
+      stage('Push docker image') {
+            steps{
                 script {
-                    docker.withRegistry("$DOCKER_REGISTRY_URL", dockerRegistryCredential) {
+                    docker.withRegistry( "$DOCKER_REGISTRY_URL", dockerRegistryCredential ) {
                         dockerImage.push()
+                        sh "docker images|grep $PROJECT_NAME"
                     }
-                    sh "docker images | grep ${PROJECT_NAME}"
+                    
                 }
             }
         }
+     
 
-        stage('Delete Image After Upload to Registry') {
+     stage('Deleted image After upload to Registry') {
             steps {
-                echo "Cleaning local Docker registry: ${DOCKER_TAG} image"
-                sh "docker rmi ${DOCKER_TAG}"
+                echo "Cleaning local docker registry $DOCKER_TAG image"
+                sh 'docker rmi -f $DOCKER_TAG'
             }
         }
-
-        stage('Trigger Manifest Update') {
+        
+         stage('Trigger ManifestUpdate') {
             steps {
-                echo "Triggering update_manifest job"
-                build job: 'manifest', parameters: [
-                    string(name: 'DOCKER_TAG', value: DOCKER_TAG)
+                echo "triggering updatemanifestjob"
+                build job: "manifest", parameters: [
+                    string(name: 'DOCKER_TAG', value: env.DOCKER_TAG),
                 ]
             }
         }
+        }                    
     }
-}
