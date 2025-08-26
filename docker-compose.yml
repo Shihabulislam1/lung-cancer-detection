@@ -1,0 +1,76 @@
+version: "3.9"
+
+services:
+  api:
+
+    build:
+      context: .
+      dockerfile: trained-model/Dockerfile
+    image: lung-cancer-api:latest
+    container_name: lung-cancer-api
+    restart: unless-stopped
+    environment:
+      - MODEL_FILE=vit_lung_final.keras
+      - TZ=UTC
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - cancer-net
+
+  db:
+    image: postgres:16-alpine
+    container_name: lung-cancer-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=cancer-database
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d cancer-database"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - cancer-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: lung-cancer-frontend:latest
+    container_name: lung-cancer-frontend
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - ML_API_URL=http://api:8000/predict
+      - DATABASE_URL=postgresql://myuser:mypassword@db:5432/cancer-database
+  # Set a strong secret (replace this placeholder in real deployments)
+  - NEXTAUTH_SECRET=replace_with_strong_generated_secret
+  - NEXTAUTH_URL=http://localhost:3000
+    ports:
+      - "3000:3000"
+    networks:
+      - cancer-net
+
+
+networks:
+  cancer-net:
+    driver: bridge
+
+volumes:
+  pgdata:
+    driver: local

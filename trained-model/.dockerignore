@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dist-info/
+
+# Envs
+.env
+.venv
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Data / artifacts (keep model file)
+archive/
+*.jpg
+*.jpeg
+*.png
+!app/vit_lung_final.keras
+app/training_data/
+
+# Caches & logs
+*.log
+.cache/
+.pip-cache/
+.hypothesis/
+.pytest_cache/
+
+# Git
+.git
+.gitignore
+
+# Node modules (if any stray)
+node_modules/

@@ -49,57 +49,53 @@ export async function POST(request: NextRequest) {
 
     // Send request to ML backend
     try {
-      // ML API integration is commented out as it's not ready yet
-      // Will be uncommented when ML API is ready
-      /*
-      let mlData;
-      if (process.env.ML_API_URL) {
-        const mlResponse = await fetch(process.env.ML_API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ imageUrl }),
-        });
+      const ML_API_ENDPOINT =
+        process.env.ML_API_URL ||
+        process.env.NEXT_PUBLIC_ML_API_URL ||
+        "http://localhost:8000/predict"; // fallback for local dev
 
-        if (!mlResponse.ok) {
-          throw new Error(`ML API responded with status: ${mlResponse.status}`);
-        }
+      // Build multipart form data with the original uploaded image file
+      const mlForm = new FormData();
+      mlForm.append("file", file, file.name);
 
-        mlData = await mlResponse.json();
-      } else {
-      */
+      const mlResp = await fetch(ML_API_ENDPOINT, {
+        method: "POST",
+        body: mlForm,
+        headers: {
+          // Don't set Content-Type - let browser set it with boundary for multipart
+        },
+      });
 
-      // Always generate mock data for now until ML API is ready
-      console.log("Using mock data for cancer detection.");
+      if (!mlResp.ok) {
+        throw new Error(
+          `ML API responded with status: ${mlResp.status} (${ML_API_ENDPOINT})`
+        );
+      }
 
-      // Simplified mock data - using only 3 classes (cancer, no cancer, inconclusive)
-      // Create mock raw output data
-      const rawOutput = [[Math.random(), Math.random(), Math.random()]];
+      const mlJson = await mlResp.json();
+      // Expected shape: { filename, prediction: { label, confidence, probabilities: {label: prob} } }
+      const prediction = mlJson?.prediction;
+      const probsMap: Record<string, number> = prediction?.probabilities || {};
 
-      // Create normalized probability distribution
-      const unnormalizedProbs = [Math.random(), Math.random(), Math.random()];
-      const sum = unnormalizedProbs.reduce((a, b) => a + b, 0);
-      const probabilities = [unnormalizedProbs.map((p) => p / sum)];
+      // Map model labels to internal 3-category schema:
+      // 0: Malignant, 1: Normal, 2: Benign (updated to match actual API response)
+      const malignantProb = probsMap["Malignant"] ?? 0;
+      const normalProb = probsMap["Normal"] ?? 0;
+      const benignProb = probsMap["Benign"] ?? 0;
 
-      // Pick a class based on highest probability
-      const predictedClassIndex = unnormalizedProbs.indexOf(
-        Math.max(...unnormalizedProbs)
-      );
+      const ordered = [malignantProb, normalProb, benignProb];
+      const predictedClassIndex = ordered.indexOf(Math.max(...ordered));
 
       const mlData = {
-        rawOutput,
-        probabilities,
+        probabilities: [ordered],
         predictedClassIndex,
       };
-      // }
 
       // Update report with ML results
       const [updatedReport] = await db
         .update(cancerReports)
         .set({
           status: "completed",
-          rawOutput: mlData.rawOutput,
           probabilities: mlData.probabilities,
           predictedClassIndex: mlData.predictedClassIndex,
           updatedAt: new Date(),

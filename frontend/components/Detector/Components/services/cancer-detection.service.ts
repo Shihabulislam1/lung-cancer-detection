@@ -38,7 +38,11 @@ export class CancerDetectionService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-      const response = await fetch("/api/cancer-detection", {
+      // Call FastAPI endpoint directly
+      const mlEndpoint =
+        process.env.NEXT_PUBLIC_ML_API_URL || "http://localhost:8000/predict";
+
+      const response = await fetch(mlEndpoint, {
         method: "POST",
         body: formData,
         signal: controller.signal,
@@ -55,7 +59,33 @@ export class CancerDetectionService {
         throw new Error(errorData.error || `Server error: ${response.status}`);
       }
 
-      return await response.json();
+      // Parse FastAPI response format
+      const mlJson = await response.json();
+      const prediction = mlJson?.prediction;
+      const probabilitiesObj: Record<string, number> =
+        prediction?.probabilities || {};
+
+      // Map API response labels to internal schema:
+      // 0: Malignant, 1: Normal, 2: Benign
+      const malignant = probabilitiesObj["Malignant"] ?? 0;
+      const normal = probabilitiesObj["Normal"] ?? 0;
+      const benign = probabilitiesObj["Benign"] ?? 0;
+
+      const ordered = [malignant, normal, benign];
+      const predictedClassIndex = ordered.indexOf(Math.max(...ordered));
+
+      // Create a preview URL for the uploaded file
+      const imageUrl = URL.createObjectURL(file);
+
+      // Fabricate a transient report (id -1 since not persisted)
+      return {
+        id: -1,
+        imageUrl,
+        status: "completed",
+        probabilities: [ordered],
+        predictedClassIndex,
+        createdAt: new Date().toISOString(),
+      } as Report;
     } catch (error) {
       clearInterval(progressInterval);
       console.error("Upload error:", error);
@@ -75,11 +105,11 @@ export class CancerDetectionService {
 
     switch (index) {
       case 0:
-        return "High probability of cancer detected";
+        return "Malignant - Cancer detected";
       case 1:
-        return "No cancer detected";
+        return "Normal - No cancer detected";
       case 2:
-        return "Inconclusive results - further testing recommended";
+        return "Benign - Non-cancerous growth";
       default:
         return "Unknown result";
     }
@@ -94,7 +124,7 @@ export class CancerDetectionService {
       case 1:
         return "text-green-600";
       case 2:
-        return "text-amber-500";
+        return "text-blue-600";
       default:
         return "text-gray-500";
     }

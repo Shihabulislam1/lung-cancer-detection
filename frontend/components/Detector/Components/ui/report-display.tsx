@@ -13,6 +13,14 @@ interface ReportDisplayProps {
 }
 
 export const ReportDisplay: React.FC<ReportDisplayProps> = ({ report }) => {
+  // Debug logging
+  console.log("ReportDisplay received:", {
+    reportId: report.id,
+    status: report.status,
+    predictedClassIndex: report.predictedClassIndex,
+    probabilities: report.probabilities,
+  });
+
   return (
     <div className="grid md:grid-cols-2 gap-6">
       <div className="relative w-full h-64 md:h-full">
@@ -61,6 +69,11 @@ export const ReportDisplay: React.FC<ReportDisplayProps> = ({ report }) => {
                   report.predictedClassIndex
                 )}
               </h4>
+              {/* Debug info */}
+              <p className="text-xs text-gray-400">
+                Debug: Class Index = {report.predictedClassIndex}, Status ={" "}
+                {report.status}
+              </p>
             </div>
 
             {report.probabilities && (
@@ -88,19 +101,28 @@ interface ProbabilityChartProps {
 const ProbabilityChart: React.FC<ProbabilityChartProps> = ({
   probabilities,
 }) => {
+  // Ensure we have valid probabilities
+  if (!probabilities || !probabilities[0] || probabilities[0].length !== 3) {
+    return (
+      <div className="text-sm text-gray-500">Probability data unavailable</div>
+    );
+  }
+
+  const [malignant, normal, benign] = probabilities[0];
+
   return (
     <div className="space-y-3">
       <h4 className="font-medium text-sm">Probability Breakdown:</h4>
 
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span>Cancer:</span>
-          <span className="font-medium">
-            {(probabilities[0][0] * 100).toFixed(1)}%
+          <span>Malignant (Cancer):</span>
+          <span className="font-medium text-red-600">
+            {(malignant * 100).toFixed(1)}%
           </span>
         </div>
         <Progress
-          value={probabilities[0][0] * 100}
+          value={malignant * 100}
           className="h-2"
           indicatorClassName="bg-red-500"
         />
@@ -108,13 +130,13 @@ const ProbabilityChart: React.FC<ProbabilityChartProps> = ({
 
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span>No Cancer:</span>
-          <span className="font-medium">
-            {(probabilities[0][1] * 100).toFixed(1)}%
+          <span>Normal (No Cancer):</span>
+          <span className="font-medium text-green-600">
+            {(normal * 100).toFixed(1)}%
           </span>
         </div>
         <Progress
-          value={probabilities[0][1] * 100}
+          value={normal * 100}
           className="h-2"
           indicatorClassName="bg-green-500"
         />
@@ -122,15 +144,15 @@ const ProbabilityChart: React.FC<ProbabilityChartProps> = ({
 
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span>Inconclusive:</span>
-          <span className="font-medium">
-            {(probabilities[0][2] * 100).toFixed(1)}%
+          <span>Benign (Non-cancerous):</span>
+          <span className="font-medium text-blue-600">
+            {(benign * 100).toFixed(1)}%
           </span>
         </div>
         <Progress
-          value={probabilities[0][2] * 100}
+          value={benign * 100}
           className="h-2"
-          indicatorClassName="bg-amber-500"
+          indicatorClassName="bg-blue-500"
         />
       </div>
     </div>
