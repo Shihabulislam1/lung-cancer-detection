@@ -58,7 +58,11 @@ export default async function DashboardPage() {
     id: report.id,
     imageUrl: report.imageUrl,
     status: report.status,
-    predictedClassIndex: report.predictedClassIndex || undefined,
+    // Preserve 0 (cancer) rather than dropping via falsy fallback
+    predictedClassIndex:
+      typeof report.predictedClassIndex === "number"
+        ? report.predictedClassIndex
+        : undefined,
     createdAt: report.createdAt,
   }));
 

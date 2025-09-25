@@ -40,13 +40,24 @@ export class CancerDetectionService {
 
       // Call FastAPI endpoint directly
       const mlEndpoint =
-        process.env.NEXT_PUBLIC_ML_API_URL || "http://localhost:8000/predict";
+        process.env.NEXT_PUBLIC_ML_API_URL?.replace(/\/$/, "") ||
+        "http://localhost:8000/predict";
 
-      const response = await fetch(mlEndpoint, {
-        method: "POST",
-        body: formData,
-        signal: controller.signal,
-      });
+      let response: Response;
+      try {
+        response = await fetch(mlEndpoint, {
+          method: "POST",
+          body: formData,
+          signal: controller.signal,
+        });
+      } catch (netErr) {
+        clearTimeout(timeoutId);
+        throw new Error(
+          netErr instanceof Error
+            ? `Network error: ${netErr.message}`
+            : "Network error: unable to reach prediction service"
+        );
+      }
 
       clearTimeout(timeoutId);
       clearInterval(progressInterval);
@@ -61,31 +72,74 @@ export class CancerDetectionService {
 
       // Parse FastAPI response format
       const mlJson = await response.json();
+      if (mlJson && mlJson.ok === false) {
+        throw new Error(mlJson.error || "Prediction failed");
+      }
+
       const prediction = mlJson?.prediction;
       const probabilitiesObj: Record<string, number> =
         prediction?.probabilities || {};
 
-      // Map API response labels to internal schema:
-      // 0: Malignant, 1: Normal, 2: Benign
-      const malignant = probabilitiesObj["Malignant"] ?? 0;
-      const normal = probabilitiesObj["Normal"] ?? 0;
-      const benign = probabilitiesObj["Benign"] ?? 0;
+      // Normalize keys (handle different casing / naming like Bengin vs Benign)
+      const norm = (k: string) =>
+        k.toLowerCase().replace(/benign|bengin/, "benign");
+      let malignant = 0,
+        normal = 0,
+        benign = 0;
+      for (const [k, v] of Object.entries(probabilitiesObj)) {
+        const nk = norm(k);
+        if (nk.includes("malig")) malignant = v;
+        else if (nk.includes("normal")) normal = v;
+        else if (nk.includes("benign")) benign = v;
+      }
 
       const ordered = [malignant, normal, benign];
       const predictedClassIndex = ordered.indexOf(Math.max(...ordered));
 
+      // Fallback if all zero (e.g., unexpected response)
+      if (ordered.every((v) => v === 0)) {
+        console.warn(
+          "All probabilities zero or unmapped. Raw response:",
+          mlJson
+        );
+      }
+
       // Create a preview URL for the uploaded file
       const imageUrl = URL.createObjectURL(file);
 
-      // Fabricate a transient report (id -1 since not persisted)
-      return {
+      // Persist the report via internal API (server will attach real id)
+      let persisted: Report | null = null;
+      try {
+        const persistRes = await fetch("/api/cancer-detection/reports", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageUrl, // For now use the local object URL; later could replace with uploaded URL
+            probabilities: [ordered],
+            predictedClassIndex,
+            rawOutput: prediction?.logits ? [prediction.logits] : undefined,
+          }),
+        });
+        if (persistRes.ok) {
+          persisted = (await persistRes.json()) as Report;
+        } else {
+          console.warn("Failed to persist report", await persistRes.text());
+        }
+      } catch (e) {
+        console.warn(
+          "Persistence error (report still available in session)",
+          e
+        );
+      }
+
+      return (persisted || {
         id: -1,
         imageUrl,
         status: "completed",
         probabilities: [ordered],
         predictedClassIndex,
         createdAt: new Date().toISOString(),
-      } as Report;
+      }) as Report;
     } catch (error) {
       clearInterval(progressInterval);
       console.error("Upload error:", error);

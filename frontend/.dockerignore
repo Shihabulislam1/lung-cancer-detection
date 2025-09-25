@@ -1,22 +1,38 @@
 Dockerfile
 .dockerignore
 node_modules
-npm-debug.log
-README.md
-.env
-.env.local
-.env.production.local
-.env.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store
+
+# Build outputs
 .next
+out
+
+# Env and local files
+.env*
+!.env.example
+*.local
+
+# VCS
 .git
 .gitignore
-.eslintrc.json
+
+# OS/editor
+.DS_Store
+*.swp
+*.swo
+.idea
 .vscode
+
+# Coverage and test outputs
 coverage
 .nyc_output
+
+# Logs and archives
 *.log
 logs
 *.tgz
 *.tar.gz
-.DS_Store
 Thumbs.db

@@ -1,29 +1,13 @@
 version: "3.8"
-
 services:
-  # Next.js Frontend Application
   frontend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: cancer-app-frontend
-    restart: unless-stopped
+    image: lung-cancer-frontend:latest
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://myuser:mypassword@host.docker.internal:5432/cancer-database
-      - NEXTAUTH_SECRET=your-secret-key-here
-      - NEXTAUTH_URL=http://localhost:3000
-      - CLOUDINARY_CLOUD_NAME=dwtmwnrtf
-      - CLOUDINARY_API_KEY=659136859291728
-      - CLOUDINARY_API_SECRET=_N54VyrkVabbHhFBBhZjScWW2wk
-      - ML_API_URL=https://your-flask-api.com/predict
-    networks:
-      - cancer-app-network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-networks:
-  cancer-app-network:
-    driver: bridge
+      - NEXT_TELEMETRY_DISABLED=1
+    restart: unless-stopped

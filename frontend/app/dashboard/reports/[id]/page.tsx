@@ -32,11 +32,11 @@ export default async function ReportPage({ params }: ReportPageProps) {
   const headersList = await headers();
   const response = await fetch(
     `${baseUrl}/api/cancer-detection/reports/${reportId}`,
-    { 
+    {
       cache: "no-store",
       headers: {
         Cookie: headersList.get("cookie") || "",
-      }
+      },
     }
   );
 
@@ -56,9 +56,13 @@ export default async function ReportPage({ params }: ReportPageProps) {
     id: dbReport.id,
     imageUrl: dbReport.imageUrl,
     status: dbReport.status,
-    rawOutput: dbReport.rawOutput || undefined,
-    probabilities: dbReport.probabilities || undefined,
-    predictedClassIndex: dbReport.predictedClassIndex || undefined,
+    rawOutput: dbReport.rawOutput ?? undefined,
+    probabilities: dbReport.probabilities ?? undefined,
+    // Preserve 0 (cancer) instead of dropping it via falsy check
+    predictedClassIndex:
+      typeof dbReport.predictedClassIndex === "number"
+        ? dbReport.predictedClassIndex
+        : undefined,
     createdAt:
       typeof dbReport.createdAt === "string"
         ? dbReport.createdAt
