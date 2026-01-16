@@ -1,43 +1,60 @@
-# syntax=docker/dockerfile:1
+# Use the official Node.js 22 Alpine image as base
+FROM node:22-alpine AS base
 
-# Install dependencies (including native build tools for any native modules)
-FROM node:22-bookworm-slim AS deps
+# Install dependencies only when needed
+FROM base AS deps
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install build tools for native Node modules (e.g., bcrypt, better-sqlite3)
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 make g++ \
-  && rm -rf /var/lib/apt/lists/*
+# Copy package files
+COPY package.json package-lock.json* ./
+# Install dependencies with legacy peer deps to handle conflicts
+RUN npm ci --legacy-peer-deps
 
-COPY package*.json ./
-RUN npm ci
-
-# Build the Next.js app (skip drizzle migrations by invoking next directly)
-FROM node:22-bookworm-slim AS builder
+# Rebuild the source code only when needed
+FROM base AS builder
 WORKDIR /app
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Use Next's local binary directly to avoid running package.json build script
-RUN npx next build
-
-# Production runtime image
-FROM node:22-bookworm-slim AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
+# Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy only the standalone output and static assets
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci --legacy-peer-deps
+
+# Build the application
+RUN npx next build
+
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Create a non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy public folder
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Copy built application
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
 
 EXPOSE 3000
-USER node
 
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Start the application
 CMD ["node", "server.js"]
