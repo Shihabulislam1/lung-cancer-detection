@@ -1,4 +1,3 @@
 *.zip
 /archive
 /training_data
-*.keras
