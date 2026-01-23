@@ -8,6 +8,8 @@ services:
     image: lung-cancer-predict-api:latest
     container_name: lung-cancer-predict-api
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - TZ=UTC
       # Override if your model file name/path differs

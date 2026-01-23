@@ -48,18 +48,22 @@ Response:
 
 ## Environment Variables
 
-| Name         | Purpose                                    | Default                |
-| ------------ | ------------------------------------------ | ---------------------- |
-| `MODEL_FILE` | Relative/absolute path to Keras model file | `vit_lung_final.keras` |
-| `TZ`         | Timezone inside container                  | `UTC`                  |
+| Name                   | Purpose                                    | Default                       |
+| ---------------------- | ------------------------------------------ | ----------------------------- |
+| `MODEL_FILE`           | Relative/absolute path to Keras model file | `lung_cancer_vit_model.keras` |
+| `TZ`                   | Timezone inside container                  | `UTC`                         |
+| `MODEL_AUTO_DOWNLOAD`  | Auto-download the model if missing (0/1)   | `1`                           |
+| `MODEL_GDRIVE_FILE_ID` | Google Drive file id for the model         | (preconfigured)               |
+| `MODEL_GDRIVE_URL`     | Google Drive URL for the model (optional)  | (derived from file id)        |
 
 ## Local (Non-Docker) Dev
 
 ```
-python -m venv .venv
-source .venv/Scripts/activate  # (Windows Git Bash) or .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+python -m venv venv
+source venv/Scripts/activate  # (Windows Git Bash) or venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
 Open http://localhost:8000/docs

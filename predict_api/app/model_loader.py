@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import os
 import json
-from typing import List, Dict, Any, Iterable
+from typing import List, Dict, Any, Iterable, Optional
 from tensorflow import keras
 from tensorflow.keras.utils import register_keras_serializable
 from tensorflow.keras import layers
@@ -27,6 +27,17 @@ import numpy as np
 # ---------------------------------------------------------------------------
 DEFAULT_MODEL_FILENAME = "lung_cancer_vit_model.keras"  # matches file in same dir as main.py
 MODEL_PATH = os.getenv("MODEL_FILE", DEFAULT_MODEL_FILENAME)
+
+# Google Drive auto-download (only used if model file is missing)
+# You can override at runtime:
+#   - MODEL_AUTO_DOWNLOAD=0 (disable)
+#   - MODEL_GDRIVE_FILE_ID=... (change file)
+#   - MODEL_GDRIVE_URL=... (full share URL or uc?id= URL)
+DEFAULT_MODEL_GDRIVE_FILE_ID = "1vDEBunhAw9ZzTHya6TY8K0YZ1BwQqUgS"
+MODEL_AUTO_DOWNLOAD = os.getenv("MODEL_AUTO_DOWNLOAD", "1").strip().lower() in {"1", "true", "yes", "y"}
+MODEL_GDRIVE_FILE_ID = os.getenv("MODEL_GDRIVE_FILE_ID", DEFAULT_MODEL_GDRIVE_FILE_ID)
+MODEL_GDRIVE_URL = os.getenv("MODEL_GDRIVE_URL", f"https://drive.google.com/uc?id={MODEL_GDRIVE_FILE_ID}")
+
 LABELS_FILE = os.path.join(os.path.dirname(__file__), "labels.json")
 IMAGE_SIZE = 256
 TRAIN_DATA_DIR = "training_data"  # optional (used only for label inference)
@@ -95,6 +106,60 @@ def _resolve_model_path(path: str) -> str:
         return alt
     raise FileNotFoundError(f"Model file not found (tried '{path}' and '{alt}')")
 
+
+def _expected_model_path(path: str) -> str:
+    """Return the most likely on-disk location for the model file.
+
+    If a relative path is provided, we prefer placing it next to this file.
+    """
+    if os.path.isabs(path):
+        return path
+    return os.path.join(os.path.dirname(__file__), path)
+
+
+def _download_model_from_gdrive(url: str, output_path: str) -> None:
+    """Download a file from Google Drive to output_path.
+
+    Uses `gdown` because Google Drive downloads require special handling.
+    """
+    try:
+        import gdown  # type: ignore
+    except Exception as e:  # noqa: BLE001
+        raise RuntimeError(
+            "Model file is missing and auto-download is enabled, but 'gdown' is not installed. "
+            "Add it to requirements (gdown) or set MODEL_AUTO_DOWNLOAD=0."
+        ) from e
+
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    tmp_path = output_path + ".part"
+    if os.path.exists(tmp_path):
+        try:
+            os.remove(tmp_path)
+        except OSError:
+            pass
+
+    print(f"[INFO] Model file not found. Downloading from Google Drive -> {output_path}")
+    downloaded: Optional[str] = gdown.download(url=url, output=tmp_path, quiet=False, fuzzy=True)
+    if not downloaded or not os.path.exists(tmp_path):
+        raise RuntimeError("Failed to download model from Google Drive (no file produced).")
+    if os.path.getsize(tmp_path) < 1024 * 1024:
+        raise RuntimeError("Downloaded model file looks too small; aborting.")
+
+    os.replace(tmp_path, output_path)
+
+
+def _ensure_model_present() -> None:
+    """Ensure the model exists on disk; download if configured and missing."""
+    if not MODEL_AUTO_DOWNLOAD:
+        return
+
+    expected = _expected_model_path(MODEL_PATH)
+    # If the model exists either at the expected location or at the raw path, do nothing.
+    if os.path.exists(expected) or os.path.exists(MODEL_PATH):
+        return
+
+    _download_model_from_gdrive(MODEL_GDRIVE_URL, expected)
+
 _MODEL = None  # lazy singleton
 CLASS_LABELS: List[str] = []
 
@@ -129,6 +194,7 @@ def get_model():
     """Return (and lazily load) the Keras model."""
     global _MODEL
     if _MODEL is None:
+        _ensure_model_present()
         path = _resolve_model_path(MODEL_PATH)
         _MODEL = keras.models.load_model(
             path,
