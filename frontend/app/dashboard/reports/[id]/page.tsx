@@ -27,18 +27,34 @@ export default async function ReportPage({ params }: ReportPageProps) {
   // Handle invalid ID
   if (isNaN(reportId)) {
     notFound();
-  } // Fetch the report data from the API
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  // Fetch the report data from the API
+  // Build origin from environment or request headers so server fetches work on Vercel
+  const baseUrl = process.env.NEXTAUTH_URL ?? "";
   const headersList = await headers();
-  const response = await fetch(
-    `${baseUrl}/api/cancer-detection/reports/${reportId}`,
-    {
+  const apiPath = `/api/cancer-detection/reports/${reportId}`;
+  const inferredHost =
+    headersList.get("x-forwarded-host") || headersList.get("host") || process.env.VERCEL_URL || "";
+  const inferredProto =
+    headersList.get("x-forwarded-proto") || (process.env.NODE_ENV === "development" ? "http" : "https");
+  const origin = baseUrl
+    ? baseUrl.replace(/\/$/, "")
+    : inferredHost
+    ? `${inferredProto}://${inferredHost.replace(/\/$/, "")}`
+    : "";
+
+  let response: Response;
+  try {
+    const fetchUrl = origin ? `${origin}${apiPath}` : apiPath;
+    response = await fetch(fetchUrl, {
       cache: "no-store",
       headers: {
         Cookie: headersList.get("cookie") || "",
       },
-    }
-  );
+    });
+  } catch (err) {
+    console.error("Failed to fetch report:", err);
+    throw new Error(`Failed to fetch report: ${String(err)}`);
+  }
 
   // If report not found or doesn't belong to user
   if (!response.ok) {
