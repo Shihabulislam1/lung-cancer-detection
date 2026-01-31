@@ -1,1 +1,2 @@
-*.keras filter=lfs diff=lfs merge=lfs -text
+## NOTE: Do not track model files in git.
+## Keep large model artifacts outside the repo (or use a dedicated model registry).
