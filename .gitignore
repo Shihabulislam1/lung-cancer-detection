@@ -2,3 +2,4 @@
 /archive
 /training_data
 *.keras
+/huggingface-deploy
