@@ -22,15 +22,32 @@ export default async function DashboardPage() {
   }
 
   // Fetch user reports from the API using server component native fetch
+  // Use a relative path in production instead of defaulting to localhost
   // Make sure to pass cookies for auth to work properly
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXTAUTH_URL ?? ""; // empty => relative URL
   const headersList = await headers();
-  const response = await fetch(`${baseUrl}/api/cancer-detection/reports`, {
-    cache: "no-store",
-    headers: {
-      Cookie: headersList.get("cookie") || "",
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/api/cancer-detection/reports`, {
+      cache: "no-store",
+      headers: {
+        Cookie: headersList.get("cookie") || "",
+      },
+    });
+  } catch (err) {
+    console.error("Failed to fetch reports:", err);
+    return (
+      <div className="container py-10 mx-auto">
+        <div className="flex items-center justify-between mb-10">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h2 className="text-xl font-medium">Welcome, {session.user.name || "User"}</h2>
+        </div>
+        <div className="p-4 text-red-600 bg-red-100 border border-red-200 rounded-md">
+          Error loading reports. Please try again later.
+        </div>
+      </div>
+    );
+  }
 
   if (!response.ok) {
     console.error(`Failed to fetch reports: ${response.status}`);
