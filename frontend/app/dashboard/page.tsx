@@ -24,11 +24,23 @@ export default async function DashboardPage() {
   // Fetch user reports from the API using server component native fetch
   // Use a relative path in production instead of defaulting to localhost
   // Make sure to pass cookies for auth to work properly
-  const baseUrl = process.env.NEXTAUTH_URL ?? ""; // empty => relative URL
+  const baseUrl = process.env.NEXTAUTH_URL ?? ""; // empty => build from headers or use relative URL
   const headersList = await headers();
+  const apiPath = "/api/cancer-detection/reports";
+  // Build a proper origin when NEXTAUTH_URL isn't provided (useful on Vercel)
+  const inferredHost =
+    headersList.get("x-forwarded-host") || headersList.get("host") || process.env.VERCEL_URL || "";
+  const inferredProto = headersList.get("x-forwarded-proto") || (process.env.NODE_ENV === "development" ? "http" : "https");
+  const origin = baseUrl
+    ? baseUrl.replace(/\/$/, "")
+    : inferredHost
+    ? `${inferredProto}://${inferredHost.replace(/\/$/, "")}`
+    : "";
+
   let response: Response;
   try {
-    response = await fetch(`${baseUrl}/api/cancer-detection/reports`, {
+    const fetchUrl = origin ? `${origin}${apiPath}` : apiPath; // absolute if origin known, otherwise relative
+    response = await fetch(fetchUrl, {
       cache: "no-store",
       headers: {
         Cookie: headersList.get("cookie") || "",
