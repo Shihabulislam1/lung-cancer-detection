@@ -27,6 +27,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
   // Handle invalid ID
   if (isNaN(reportId)) {
     notFound();
+  }
   // Fetch the report data from the API
   // Build origin from environment or request headers so server fetches work on Vercel
   const baseUrl = process.env.NEXTAUTH_URL ?? "";
@@ -94,4 +95,4 @@ export default async function ReportPage({ params }: ReportPageProps) {
       <DetailedReport report={formattedReport} />
     </div>
   );
-}}
+}
