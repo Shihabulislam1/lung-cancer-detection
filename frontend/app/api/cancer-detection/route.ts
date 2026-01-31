@@ -52,7 +52,11 @@ export async function POST(request: NextRequest) {
       const ML_API_ENDPOINT =
         process.env.ML_API_URL ||
         process.env.NEXT_PUBLIC_ML_API_URL ||
-        "http://localhost:8000/predict"; // fallback for local dev
+        "https://shhabul-cancer-api.hf.space/predict"; // fallback for local dev
+
+      // Hugging Face private Spaces (or gated endpoints) require a Bearer token.
+      // Keep this server-side only (do NOT expose tokens via NEXT_PUBLIC_*).
+      const bearerToken =  process.env.BEARER_TOKEN || "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";
 
       // Build multipart form data with the original uploaded image file
       const mlForm = new FormData();
@@ -63,6 +67,7 @@ export async function POST(request: NextRequest) {
         body: mlForm,
         headers: {
           // Don't set Content-Type - let browser set it with boundary for multipart
+          ...(bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {}),
         },
       });
 
@@ -78,10 +83,12 @@ export async function POST(request: NextRequest) {
       const probsMap: Record<string, number> = prediction?.probabilities || {};
 
       // Map model labels to internal 3-category schema:
-      // 0: Malignant, 1: Normal, 2: Benign (updated to match actual API response)
-      const malignantProb = probsMap["Malignant"] ?? 0;
-      const normalProb = probsMap["Normal"] ?? 0;
-      const benignProb = probsMap["Benign"] ?? 0;
+      // 0: Malignant, 1: Normal, 2: Benign
+      // Model labels can vary (e.g., "Malignant cases" / "Normal cases" / "Bengin cases").
+      const malignantProb = probsMap["Malignant cases"] ?? probsMap["Malignant"] ?? 0;
+      const normalProb = probsMap["Normal cases"] ?? probsMap["Normal"] ?? 0;
+      const benignProb =
+        probsMap["Bengin cases"] ?? probsMap["Benign cases"] ?? probsMap["Benign"] ?? 0;
 
       const ordered = [malignantProb, normalProb, benignProb];
       const predictedClassIndex = ordered.indexOf(Math.max(...ordered));

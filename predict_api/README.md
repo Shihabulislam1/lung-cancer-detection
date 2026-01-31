@@ -1,3 +1,13 @@
+---
+title: Cancer Predict API
+emoji: ":microscope:"
+colorFrom: purple
+colorTo: pink
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Lung Cancer Detection Backend (FastAPI + TensorFlow)
 
 Production-ready containerized API serving a Vision Transformer Keras model for lung cancer image classification.
@@ -25,7 +35,7 @@ Production-ready containerized API serving a Vision Transformer Keras model for 
 ### Example `curl`
 
 ```
-curl -X POST http://localhost:8000/predict \
+curl -X POST http://localhost:7860/predict \
   -F "file=@sample.jpg"
 ```
 
@@ -71,17 +81,17 @@ Open http://localhost:8000/docs
 ## Docker Build & Run
 
 ```
-# From repo root
-docker build -f trained-model/Dockerfile -t lung-cancer-api .
+# From this folder (predict_api)
+docker build -t lung-cancer-api .
 
 # Run
-docker run --rm -p 8000:8000 --name lung-api lung-cancer-api
+docker run --rm -p 7860:7860 --name lung-api lung-cancer-api
 ```
 
 Health check:
 
 ```
-curl http://localhost:8000/healthz
+curl http://localhost:7860/healthz
 ```
 
 ## docker-compose (Backend + Frontend)
@@ -92,7 +102,7 @@ docker compose up --build
 
 Services:
 
-- API: http://localhost:8000
+- API: http://localhost:7860 (Hugging Face Docker Spaces requires port 7860)
 - Frontend: http://localhost:3000 (calls API via internal DNS `http://api:8000`)
 
 To rebuild after code changes:
@@ -102,6 +112,33 @@ docker compose build api && docker compose up -d api
 ```
 
 ## Deployment Guidance
+
+## Deploy to Hugging Face Docker Space
+
+This folder is already structured as a Docker Space (it contains `Dockerfile`, `requirements.txt`, and `app/`).
+
+1) Create a Hugging Face Space with SDK = `Docker`.
+
+2) Clone the Space repo and copy this folder's contents to the repo root (important: the Space expects `Dockerfile` at the repo root):
+
+```
+git clone https://huggingface.co/spaces/<your-username>/<your-space>
+# Copy the contents of predict_api/ into the cloned repo root
+```
+
+3) Commit + push:
+
+```
+git add .
+git commit -m "Deploy FastAPI predict API"
+git push
+```
+
+4) Once built, the API will be available at your Space URL.
+
+Notes:
+- The container listens on port `7860` (required by Hugging Face).
+- If `lung_cancer_vit_model.keras` is not present in the repo, the app will auto-download it at runtime (see `MODEL_AUTO_DOWNLOAD`, `MODEL_GDRIVE_*`).
 
 ### Image Tagging Strategy
 

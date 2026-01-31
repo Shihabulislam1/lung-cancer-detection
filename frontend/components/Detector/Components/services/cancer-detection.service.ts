@@ -38,14 +38,14 @@ export class CancerDetectionService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-      // Call FastAPI endpoint directly
-      const mlEndpoint =
-        process.env.NEXT_PUBLIC_ML_API_URL?.replace(/\/$/, "") ||
-        "http://localhost:8000/predict";
+      // Always call our internal Next.js API route.
+      // That route handles auth, persistence, and securely calls the ML backend
+      // (Hugging Face) with its Bearer token server-side.
+      const apiEndpoint = "/api/cancer-detection";
 
       let response: Response;
       try {
-        response = await fetch(mlEndpoint, {
+        response = await fetch(apiEndpoint, {
           method: "POST",
           body: formData,
           signal: controller.signal,
@@ -55,7 +55,7 @@ export class CancerDetectionService {
         throw new Error(
           netErr instanceof Error
             ? `Network error: ${netErr.message}`
-            : "Network error: unable to reach prediction service"
+            : "Network error: unable to reach server"
         );
       }
 
@@ -64,82 +64,15 @@ export class CancerDetectionService {
       onProgressUpdate(100);
 
       if (!response.ok) {
+        // Next route returns { error: string } on failures.
         const errorData = await response
           .json()
           .catch(() => ({ error: "Unknown error" }));
         throw new Error(errorData.error || `Server error: ${response.status}`);
       }
 
-      // Parse FastAPI response format
-      const mlJson = await response.json();
-      if (mlJson && mlJson.ok === false) {
-        throw new Error(mlJson.error || "Prediction failed");
-      }
-
-      const prediction = mlJson?.prediction;
-      const probabilitiesObj: Record<string, number> =
-        prediction?.probabilities || {};
-
-      // Normalize keys (handle different casing / naming like Bengin vs Benign)
-      const norm = (k: string) =>
-        k.toLowerCase().replace(/benign|bengin/, "benign");
-      let malignant = 0,
-        normal = 0,
-        benign = 0;
-      for (const [k, v] of Object.entries(probabilitiesObj)) {
-        const nk = norm(k);
-        if (nk.includes("malig")) malignant = v;
-        else if (nk.includes("normal")) normal = v;
-        else if (nk.includes("benign")) benign = v;
-      }
-
-      const ordered = [malignant, normal, benign];
-      const predictedClassIndex = ordered.indexOf(Math.max(...ordered));
-
-      // Fallback if all zero (e.g., unexpected response)
-      if (ordered.every((v) => v === 0)) {
-        console.warn(
-          "All probabilities zero or unmapped. Raw response:",
-          mlJson
-        );
-      }
-
-      // Create a preview URL for the uploaded file
-      const imageUrl = URL.createObjectURL(file);
-
-      // Persist the report via internal API (server will attach real id)
-      let persisted: Report | null = null;
-      try {
-        const persistRes = await fetch("/api/cancer-detection/reports", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            imageUrl, // For now use the local object URL; later could replace with uploaded URL
-            probabilities: [ordered],
-            predictedClassIndex,
-            rawOutput: prediction?.logits ? [prediction.logits] : undefined,
-          }),
-        });
-        if (persistRes.ok) {
-          persisted = (await persistRes.json()) as Report;
-        } else {
-          console.warn("Failed to persist report", await persistRes.text());
-        }
-      } catch (e) {
-        console.warn(
-          "Persistence error (report still available in session)",
-          e
-        );
-      }
-
-      return (persisted || {
-        id: -1,
-        imageUrl,
-        status: "completed",
-        probabilities: [ordered],
-        predictedClassIndex,
-        createdAt: new Date().toISOString(),
-      }) as Report;
+      // Response is the persisted report from our server.
+      return (await response.json()) as Report;
     } catch (error) {
       clearInterval(progressInterval);
       console.error("Upload error:", error);
