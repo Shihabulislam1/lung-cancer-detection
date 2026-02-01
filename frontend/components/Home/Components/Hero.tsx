@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import DynamicIcon from "./DynamicIcon";
 import { IconConfig } from "./types";
+import Image from "next/image";
 
 type HeroProps = {
   title: string;
@@ -27,7 +28,7 @@ const Hero: React.FC<HeroProps> = ({
   description,
   primaryCta,
   secondaryCta,
-  imageUrl = "/placeholder.jpg",
+  imageUrl = "/hero.jpg",
 }) => {
   return (
     <section className="py-24 px-6 bg-gradient-to-b from-background to-background/80">
@@ -82,9 +83,15 @@ const Hero: React.FC<HeroProps> = ({
             <div className="relative h-80 md:h-96 w-full rounded-xl bg-muted overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-primary/5 z-10"></div>
               <div
-                className="absolute inset-0 bg-[url('/placeholder.jpg')] bg-cover bg-center"
+                className="absolute inset-0 bg-[url('/hero.jpg')] bg-cover bg-center"
                 style={{ backgroundImage: `url(${imageUrl})` }}
-              ></div>
+              >
+                <Image
+                src="/hero.jpg"
+                alt="Hero Image"
+                fill
+                />
+              </div>
             </div>
           </motion.div>
         </div>
