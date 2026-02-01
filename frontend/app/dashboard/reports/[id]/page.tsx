@@ -92,6 +92,12 @@ export default async function ReportPage({ params }: ReportPageProps) {
 
   return (
     <div className="container py-10 mx-auto">
+      <div className="mb-6 p-4 border-l-4 border-red-500 bg-red-50 rounded">
+        <h3 className="font-bold">IMPORTANT DISCLAIMER — Beta Version</h3>
+        <p className="text-sm mt-2">LIMITATIONS: This AI tool is in active development and testing. Prediction accuracy may vary and is not guaranteed. Results should NOT replace professional medical consultation. Not approved for clinical diagnostic use.</p>
+        <p className="text-sm mt-2">RECOMMENDATIONS: Use only as a preliminary screening tool. Consult licensed healthcare providers for diagnosis. Seek immediate medical attention for urgent concerns.</p>
+        <p className="text-sm mt-2">Acknowledgment: By using this service, you acknowledge these limitations.</p>
+      </div>
       <DetailedReport report={formattedReport} />
     </div>
   );

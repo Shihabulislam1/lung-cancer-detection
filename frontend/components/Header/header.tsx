@@ -34,6 +34,22 @@ export default function Header() {
             >
               Home
             </Link>
+            <Link
+              href="/about"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                pathname === "/about" ? "text-foreground" : "text-foreground/60"
+              }`}
+            >
+              About
+            </Link>
+            <Link
+              href="/researcher"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                pathname === "/researcher" ? "text-foreground" : "text-foreground/60"
+              }`}
+            >
+              Researcher
+            </Link>
             {isAuthenticated && (
               <>
                 <Link
