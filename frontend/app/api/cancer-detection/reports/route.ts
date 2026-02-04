@@ -32,8 +32,6 @@ export async function GET() {
   }
 }
 
-// Persist a new cancer detection report.
-// Expected JSON body: { imageUrl: string, probabilities?: number[][], predictedClassIndex?: number, rawOutput?: number[][] }
 export async function POST(req: Request) {
   try {
     const session = (await getServerSession(authOptions)) as Session | null;
@@ -55,7 +53,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Basic shape checks (optional / lenient)
     const probValue = Array.isArray(probabilities) ? probabilities : undefined;
     const rawValue = Array.isArray(rawOutput) ? rawOutput : undefined;
     const pciValue =
@@ -67,7 +64,7 @@ export async function POST(req: Request) {
       .insert(cancerReports)
       .values({
         userId: userIdNum,
-        imageUrl, // Could be data URL or remote storage URL
+        imageUrl, 
         probabilities: probValue,
         rawOutput: rawValue,
         predictedClassIndex: pciValue,

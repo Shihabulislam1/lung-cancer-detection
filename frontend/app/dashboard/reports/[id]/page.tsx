@@ -20,7 +20,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
     redirect("/auth/login");
   }
 
-  // Await params to comply with Next.js dynamic API requirements
+
   const { id } = await params;
   const reportId = Number.parseInt(id);
 
@@ -28,8 +28,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
   if (isNaN(reportId)) {
     notFound();
   }
-  // Fetch the report data from the API
-  // Build origin from environment or request headers so server fetches work on Vercel
+
   const baseUrl = process.env.NEXTAUTH_URL ?? "";
   const headersList = await headers();
   const apiPath = `/api/cancer-detection/reports/${reportId}`;
@@ -57,7 +56,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
     throw new Error(`Failed to fetch report: ${String(err)}`);
   }
 
-  // If report not found or doesn't belong to user
+
   if (!response.ok) {
     if (response.status === 404) {
       notFound();
@@ -65,17 +64,17 @@ export default async function ReportPage({ params }: ReportPageProps) {
     throw new Error(`Failed to fetch report: ${response.status}`);
   }
 
-  // Get the report from the API response
+
   const dbReport = await response.json();
 
-  // Transform the report data to match the expected DetailedReport type
+
   const formattedReport: DetailedReportType = {
     id: dbReport.id,
     imageUrl: dbReport.imageUrl,
     status: dbReport.status,
     rawOutput: dbReport.rawOutput ?? undefined,
     probabilities: dbReport.probabilities ?? undefined,
-    // Preserve 0 (cancer) instead of dropping it via falsy check
+  
     predictedClassIndex:
       typeof dbReport.predictedClassIndex === "number"
         ? dbReport.predictedClassIndex

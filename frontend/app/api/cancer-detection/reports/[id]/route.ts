@@ -17,7 +17,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Need to await params since it's a dynamic API in Next.js
+   
     const { id } = await params;
     const reportId = Number.parseInt(id);
 

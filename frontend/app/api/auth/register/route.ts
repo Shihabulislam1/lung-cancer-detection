@@ -8,12 +8,10 @@ export async function POST(request: Request) {
   try {
     const { name, email, password } = await request.json()
 
-    // Validate input
     if (!name || !email || !password) {
       return NextResponse.json({ message: "Missing required fields" }, { status: 400 })
     }
 
-    // Check if user already exists
     const existingUser = await db.query.users.findFirst({
       where: eq(users.email, email),
     })
@@ -22,10 +20,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "User with this email already exists" }, { status: 409 })
     }
 
-    // Hash password
     const hashedPassword = await hash(password, 10)
 
-    // Create user
     const newUser = await db
       .insert(users)
       .values({

@@ -21,13 +21,10 @@ export default async function DashboardPage() {
     redirect("/auth/login");
   }
 
-  // Fetch user reports from the API using server component native fetch
-  // Use a relative path in production instead of defaulting to localhost
-  // Make sure to pass cookies for auth to work properly
-  const baseUrl = process.env.NEXTAUTH_URL ?? ""; // empty => build from headers or use relative URL
+  const baseUrl = process.env.NEXTAUTH_URL ?? ""; 
   const headersList = await headers();
   const apiPath = "/api/cancer-detection/reports";
-  // Build a proper origin when NEXTAUTH_URL isn't provided (useful on Vercel)
+
   const inferredHost =
     headersList.get("x-forwarded-host") || headersList.get("host") || process.env.VERCEL_URL || "";
   const inferredProto = headersList.get("x-forwarded-proto") || (process.env.NODE_ENV === "development" ? "http" : "https");
@@ -39,7 +36,7 @@ export default async function DashboardPage() {
 
   let response: Response;
   try {
-    const fetchUrl = origin ? `${origin}${apiPath}` : apiPath; // absolute if origin known, otherwise relative
+    const fetchUrl = origin ? `${origin}${apiPath}` : apiPath; 
     response = await fetch(fetchUrl, {
       cache: "no-store",
       headers: {
@@ -63,7 +60,7 @@ export default async function DashboardPage() {
 
   if (!response.ok) {
     console.error(`Failed to fetch reports: ${response.status}`);
-    // Return valid jsx instead of an object
+
     return (
       <div className="container py-10 mx-auto">
         <div className="flex items-center justify-between mb-10">
@@ -79,15 +76,15 @@ export default async function DashboardPage() {
     );
   }
 
-  // Get the reports from the API response
+
   const dbReports: DbReport[] = await response.json();
 
-  // Transform database reports to match ReportSummary type
+
   const reports = dbReports.map((report: DbReport) => ({
     id: report.id,
     imageUrl: report.imageUrl,
     status: report.status,
-    // Preserve 0 (cancer) rather than dropping via falsy fallback
+
     predictedClassIndex:
       typeof report.predictedClassIndex === "number"
         ? report.predictedClassIndex
