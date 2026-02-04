@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
       // Hugging Face private Spaces (or gated endpoints) require a Bearer token.
       // Keep this server-side only (do NOT expose tokens via NEXT_PUBLIC_*).
-      const bearerToken =  process.env.BEARER_TOKEN || "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";
+      const bearerToken =  process.env.BEARER_TOKEN;
 
       // Build multipart form data with the original uploaded image file
       const mlForm = new FormData();
