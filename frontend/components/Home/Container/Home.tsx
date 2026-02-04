@@ -10,7 +10,11 @@ const HomePage = () => {
     <div className="flex flex-col min-h-screen">
       <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mx-auto container my-6 rounded">
         <h3 className="font-semibold">Beta Version - Development Notice</h3>
-        <p className="text-sm mt-1">This AI tool is in active development. Results should NOT replace professional medical consultation. Always consult licensed healthcare providers for diagnosis.</p>
+        <p className="text-sm mt-1">
+          This AI tool is in active development. Results should NOT replace
+          professional medical consultation. Always consult licensed healthcare
+          providers for diagnosis.
+        </p>
       </div>
       <Hero
         title={homeConfig.hero.title}
@@ -19,7 +23,7 @@ const HomePage = () => {
         secondaryCta={homeConfig.hero.secondaryCta}
         imageUrl={homeConfig.hero.imageUrl}
       />
-      
+
       <HowItWorks
         title={homeConfig.howItWorks.title}
         description={homeConfig.howItWorks.description}
@@ -27,13 +31,13 @@ const HomePage = () => {
         ctaText={homeConfig.howItWorks.ctaText}
         ctaLink={homeConfig.howItWorks.ctaLink}
       />
-      
+
       <Benefits
         title={homeConfig.benefits.title}
         description={homeConfig.benefits.description}
         benefits={homeConfig.benefits.items}
       />
-      
+
       <CtaSection
         title={homeConfig.cta.title}
         description={homeConfig.cta.description}
@@ -44,13 +48,27 @@ const HomePage = () => {
         <div className="grid md:grid-cols-2 gap-6">
           <div className="p-6 border rounded">
             <h2 className="text-xl font-bold mb-2">About Project</h2>
-            <p className="text-sm mb-4">This project develops an advanced AI-based system for the early detection of lung cancer using machine learning algorithms applied to medical imaging data. It aims to assist healthcare professionals with preliminary screening using machine learning on CT scans.</p>
-            <a href="/about" className="text-primary font-medium">Read full details →</a>
+            <p className="text-sm mb-4">
+              This project develops an advanced AI-based system for the early
+              detection of lung cancer using machine learning algorithms applied
+              to medical imaging data. It aims to assist healthcare
+              professionals with preliminary screening using machine learning on
+              CT scans.
+            </p>
+            <a href="/about" className="text-primary font-medium">
+              Read full details →
+            </a>
           </div>
           <div className="p-6 border rounded">
             <h2 className="text-xl font-bold mb-2">About Researcher</h2>
-            <p className="text-sm mb-4">This research is conducted by Md Shihabul Islam, BSc in Engineering in Mechatronics Engineering from RUET. For inquiries or collaboration, contact the researcher.</p>
-            <a href="/researcher" className="text-primary font-medium">Contact / Read more →</a>
+            <p className="text-sm mb-4">
+              This research is conducted by Md Shihabul Islam, BSc in
+              Engineering in Mechatronics Engineering from RUET. For inquiries
+              or collaboration, contact the researcher.
+            </p>
+            <a href="/researcher" className="text-primary font-medium">
+              Contact / Read more →
+            </a>
           </div>
         </div>
       </section>

@@ -1,0 +1,25 @@
+*.zip
+/archive
+/training_data
+*.keras
+
+# Node / Next.js
+**/node_modules/
+frontend/.next/
+frontend/.vercel/
+
+# Python
+**/__pycache__/
+**/*.pyc
+.venv/
+venv/
+
+# Local env files (do not commit secrets)
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Local deployment clones (avoid embedded git repo in main repo)
+huggingface-deploy/
+/huggingface-deploy
